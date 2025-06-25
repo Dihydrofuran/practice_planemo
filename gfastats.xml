@@ -133,10 +133,10 @@
 						<option value="gfa.gz">GFA.gz</option>
 					</param>
 					<when value="fasta">
-						<param name="line_length" type="integer" value="40" min="0" max="80" help="Optional: specifies line length when output format is fasta. Default has no line breaks. (--line-length)" />
+						<param name="line_length" type="integer" min="0" max="80" help="Optional: specifies line length when output format is fasta. Default has no line breaks. (--line-length)" />
 					</when>
 					<when value="fasta.gz">
-						<param name="line_length" type="integer" value="40" min="0" max="80" optional="true" help="Optional: specifies line length when output format is fasta. Default has no line breaks. (--line-length)" />
+						<param name="line_length" type="integer" min="0" max="80" optional="true" help="Optional: specifies line length when output format is fasta. Default has no line breaks. (--line-length)" />
 					</when>
 					<when value="fastq" />
 					<when value="fastq.gz" />
@@ -145,7 +145,7 @@
 							<param name="discover_terminal_overlaps" type="boolean" checked="false" label="Terminal overlaps selection" help="Optional: Do you want to detect terminal overlaps? (if yes --discover-terminal-overlaps)" />
 							<when value="false" />
 							<when value="true">
-								<param name="overlaps_length" type="integer" value="500" min="500" optional="true" help="Integer for minimum length required to count as an overlap for detecting terminal overlaps (minimum is 500)" />
+								<param name="overlaps_length" type="integer" min="500" optional="true" help="Integer for minimum length required to count as an overlap for detecting terminal overlaps (minimum is 500)" />
 							</when>
 						</conditional>
 						<param name="no_sequence" type="boolean" checked="false" label="Do not include sequences in the GFA output" help="Select Yes for a lighter GFA file. (--no-sequence)" />
@@ -155,7 +155,7 @@
 							<param name="discover_terminal_overlaps" type="boolean" checked="false" label="Terminal overlaps selection" help="Optional: Do you want to detect terminal overlaps? (if yes --discover-terminal-overlaps)" />
 							<when value="false" />
 							<when value="true">
-								<param name="overlaps_length" type="integer" value="500" min="500" optional="true" help="Integer for minimum length required to count as an overlap for detecting terminal overlaps (minimum is 500)" />
+								<param name="overlaps_length" type="integer" min="500" optional="true" help="Integer for minimum length required to count as an overlap for detecting terminal overlaps (minimum is 500)" />
 							</when>
 						</conditional>
 						<param name="no_sequence" type="boolean" checked="false" label="Do not include sequences in the GFA output" help="Select Yes for a lighter GFA file. (--no-sequence)" />
@@ -170,7 +170,7 @@
 					<option value="smallest">Smallest</option>
 				</param>
 				<param name="remove_gaps" type="boolean" checked="false" label="Remove gaps from the beginning and end of sequences" help="(--remove-terminal-gaps)" />
-				<param name="homopolymer_compress" type="integer" value="0" optional="true" label="Homopolymer compression" help="Compress all the homopolymers in the input above the given threshold. (--homopolymer-compress)" />
+				<param name="homopolymer_compress" type="integer" optional="true" label="Homopolymer compression" help="Compress all the homopolymers in the input above the given threshold. (--homopolymer-compress)" />
 			</when>
 			<when value="scaffolding">
 				<param name="agp" type="data" format="agp" label="Input AGP file" help="Integrate the AGP information into the assembly graph as paths. The scaffolding information is converted into paths through the graph (--agp-to-path)" />
