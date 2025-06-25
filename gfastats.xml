@@ -79,7 +79,7 @@
 		<conditional name="setting">
 			<param name="specify" type="boolean" label="Specify target sequences" checked="false" help="Please select 'Yes' if specific sequences are targeted." />
 			<when value="true">
-				<param name="target_seq" type="string" optional="true" label="Target sequence" help="Target specific sequence by header, optionally with coordinates: header[:start-end]" />
+				<param name="target_seq" type="text" optional="true" label="Target sequence" help="Target specific sequence by header, optionally with coordinates: header[:start-end]" />
 				<param name="including_seq" type="data" optional="true" label="Include specific intervals" format="bed" help="（-i）. Generates output on a subset list of headers or coordinates in 0-based bed format. It can be combined with --exclude-bed. Optional."/>
 				<param name="excluding_seq" type="data" optional="true" label="Exclude specific intervals" format="bed" help="（-e）. Exclude a subset of headers or coordinates in 0-base bed format. It can be combined with --include-bed. Optional."/>
 			</when>
@@ -150,6 +150,16 @@
 						</conditional>
 						<param name="no_sequence" type="boolean" checked="false" label="Do not include sequences in the GFA output" help="Select Yes for a lighter GFA file. (--no-sequence)" />
 					</when>
+					<when value="gfa.gz">
+						<conditional name="tos">
+							<param name="discover_terminal_overlaps" type="boolean" checked="false" label="Terminal overlaps selection" help="Optional: Do you want to detect terminal overlaps? (if yes --discover-terminal-overlaps)" />
+							<when value="false" />
+							<when value="true">
+								<param name="overlaps_length" type="integer" value="500" min="500" optional="true" help="Integer for minimum length required to count as an overlap for detecting terminal overlaps (minimum is 500)" />
+							</when>
+						</conditional>
+						<param name="no_sequence" type="boolean" checked="false" label="Do not include sequences in the GFA output" help="Select Yes for a lighter GFA file. (--no-sequence)" />
+					</when>
 				</conditional>
 				<param name="discover_paths" type="boolean" checked="false" label="Generates the initial set of paths" help="In the graph space, an assembly is a collection of segments and edges/gaps between these segments. A path defines a potential walk through the segments and edges/gaps that corresponds to a hypothesis of the actual linear sequence. (--discover-paths)" />
 				<param name="sort" type="select" label="Sort sequences" help="Specify how to sort the sequences. Ascending/descending uses the sequence/path header. (--sort)">
@@ -179,8 +189,11 @@
         </test>
     </tests>
     <help><![CDATA[
+
         gfastats input.[fasta|fastq|gfa][.gz] [expected genome size] [header[:start-end]]
+
 genome size: estimated genome size for NG* statistics (optional).
+
 header: target specific sequence by header, optionally with coordinates (optional).
 
 Options:
