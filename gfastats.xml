@@ -1,0 +1,140 @@
+<tool id="gfastats" name="gfastats" version="0.1.0" python_template_version="3.5">
+    <requirements>
+        <requirement type="package" version="1.3.6">gfastats</requirement>
+    </requirements>
+    <command detect_errors="exit_code"><![CDATA[
+        gfastats -t --locale en_US.UTF-8 --tabular '$input1'
+		#if $mode.summary_type.est_size
+			$mode.summary_type.est_size
+		#end if
+		#if $setting.target_seq
+			$setting.target_seq
+		#end if
+		#if $mode.mode == "summary" and $mode.summary_type.report_mode = "nstar"
+			--nstar-report
+		#end if
+		#if $mode.mode == "summary" and $mode.summary_type.report_mode = "outs"
+			--out-size $mode.summary_type.outs_feature
+		#end if
+		#if $mode.mode == "summary" and $mode.summary_type.report_mode = "outc"
+			--out-coord $mode.summary_type.outc_feature
+		#end if
+		#if $mode.mode == "summary" and $mode.summary_type.report_mode = "segment"
+			--segment-report
+			#if  $mode.summary_type.actual_sequence
+				--out-sequence
+			#end if
+		#end if
+		#if $setting.specify and $setting.including_seq
+			-i $setting.including_seq
+		#end if
+		#if $setting.specify and $setting.excluding_seq
+			-e $setting.excluding_seq
+		#end if
+		> '$output1'
+    ]]></command>
+    <inputs>
+        <param type="data" name="input1" format="fasta" />
+		<conditional name="setting">
+			<param name="specify" type="boolean" label="Specify target sequences" checked="false" help="如需分析指定区间序列，请勾选" />
+			<when value="true">
+				<param name="target_seq" type="string" label="Target sequence" help="Target specific sequence by header, optionally with coordinates: header[:start-end]" />
+				<param name="including_seq" type="data" label="Include specific intervals" format="bed" help="（-i）. Generates output on a subset list of headers or coordinates in 0-based bed format. It can be combined with --exclude-bed. Optional."/>
+				<param name="excluding_seq" type="data" label="Exclude specific intervals" format="bed" help="（-e）. Exclude a subset of headers or coordinates in 0-base bed format. It can be combined with --include-bed. Optional."/>
+			</when>
+			<when value="false" />
+		</conditional>
+		<conditional name="mode">
+			<param name="mode" type="select" label="Tool mode">
+				<option value="summary" selected="true">Summary statistics generation</option>
+				<option value="manipulation">Genome assembly manipulation</option>
+				<option value="scaffolding">Scaffolding</option>
+			</param>
+			<when value="summary">
+				<conditional name="summary_type">
+					<param name="report_mode" type="select" label="Report mode">
+						<option value="nstar" selected="true">Genome assembly statistics (--nstar-report)</option>
+						<option value="outs">Scaffold, contig or gap sizes (--out-size)</option>
+						<option value="outc">AGP, contig or gap coordinates (--out-coord)</option>
+						<option value="segment">Sequence statistics (--segment-report)</option>
+					</param>
+					<when value="nstar">
+						<param name="est_size" type="integer" label="Expected genome size" help="Estimated genome size. This parameter is optional, but required for NG* statistics." />
+					</when>
+					<when value="outs">
+						<param name="outs_feature" type="select" label="Feature for reporting sizes" help="Generate a tabular file with the sequence sizes (--out-size)">
+							<option value="s" selected="true">Scaffolds</option>
+							<option value="c">Contigs</option>
+							<option value="g">Gaps</option>
+						</param>
+					</when>
+					<when value="outc">
+						<param name="outc_feature" type="select" label="BED coordinates feature" help="Generates bed coordinates of given feature. Default: AGP (--out-coord)">
+							<option value="a" selected="true">AGP</option>
+							<option value="c">Contigs</option>
+							<option value="g">Gaps</option>
+						</param>
+					</when>
+					<when value="segment">
+						<param name="actual_sequence" type="boolean" label="Report actual sequence" checked="false" help="It reports also the actual sequence (--out-sequence)" /> 
+					</when>
+				</conditional>
+			</when>
+		</conditional>
+    </inputs>
+    <outputs>
+        <data name="output1" format="tabular" />
+    </outputs>
+    <tests>
+        <test>
+            <param name="input1" value="random1.fasta"/>
+            <output name="output1" file="random1.tabular"/>
+        </test>
+    </tests>
+    <help><![CDATA[
+        gfastats input.[fasta|fastq|gfa][.gz] [expected genome size] [header[:start-end]]
+genome size: estimated genome size for NG* statistics (optional).
+header: target specific sequence by header, optionally with coordinates (optional).
+
+Options:
+-a --agp-to-path <file> converts input agp to path and replaces existing paths.
+-b --out-coord a|s|c|g generates bed coordinates of given feature (agp|scaffolds|contigs|gaps default:agp).
+-e --exclude-bed <file> opposite of --include-bed. They can be combined (no coordinates).
+-f --input-sequence <file> input file (fasta, fastq, gfa [.gz]). Also as first positional argument.
+-h --help print help and exit.
+-i --include-bed <file> generates output on a subset list of headers or coordinates in 0-based bed format.
+-k --swiss-army-knife <file> set of instructions provided as an ordered list.
+-j --threads <n> numbers of threads (default: max).
+-o --out-format fasta|fastq|gfa[.gz] outputs selected sequences. If more than the extension is provided the output is written to the specified file (e.g. out.fasta.gz).
+-s --out-size s|c|g  generates size list of given feature (scaffolds|contigs|gaps default:scaffolds).
+-t --tabular output in tabular format.
+-v --version software version.
+--cmd print $0 to stdout.
+--discover-paths prototype to induce paths from input.
+--discover-terminal-overlaps <n> append perfect terminal overlaps of minimum length n (default: 1000).
+--homopolymer-compress <n> compress all the homopolymers longer than n in the input.
+--line-length <n> specifies line length in when output format is fasta. Default has no line breaks.
+--nstar-report generates full N* and L* statistics.
+--out-sequence reports also the actual sequence (in combination with --seq-report).
+--out-bubbles outputs a potential list of bubbles in the graph.
+--seq-report report statistics for each sequence.
+--sort ascending|descending|largest|smallest|file sort sequences according to input. Ascending/descending used the sequence/path header.
+--stats report summary statistics (default).
+--verbose verbose output.
+--locale set a different locale, for instance to use , for thousand separators use en_US.UTF-8.
+
+All input files can be piped from stdin using '-'.
+
+    ]]></help>
+    <citations>
+        <citation type="bibtex">
+@misc{githubgfastats,
+  author = {LastTODO, FirstTODO},
+  year = {TODO},
+  title = {gfastats},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  url = {https://github.com/vgl-hub/gfastats},
+}</citation>
+    </citations>
+</tool>
