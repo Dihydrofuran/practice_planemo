@@ -3,27 +3,12 @@
         <requirement type="package" version="1.3.6">gfastats</requirement>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
-        gfastats -t --locale en_US.UTF-8 --tabular '$input1'
+        gfastats  '$input1'
 		#if $mode.summary_type.est_size
 			$mode.summary_type.est_size
 		#end if
-		#if $setting.target_seq
+		#if $setting.specify and $setting.target_seq
 			$setting.target_seq
-		#end if
-		#if $mode.mode == "summary" and $mode.summary_type.report_mode = "nstar"
-			--nstar-report
-		#end if
-		#if $mode.mode == "summary" and $mode.summary_type.report_mode = "outs"
-			--out-size $mode.summary_type.outs_feature
-		#end if
-		#if $mode.mode == "summary" and $mode.summary_type.report_mode = "outc"
-			--out-coord $mode.summary_type.outc_feature
-		#end if
-		#if $mode.mode == "summary" and $mode.summary_type.report_mode = "segment"
-			--segment-report
-			#if  $mode.summary_type.actual_sequence
-				--out-sequence
-			#end if
 		#end if
 		#if $setting.specify and $setting.including_seq
 			-i $setting.including_seq
@@ -31,16 +16,72 @@
 		#if $setting.specify and $setting.excluding_seq
 			-e $setting.excluding_seq
 		#end if
-		> '$output1'
+		#if $mode.mode == "summary"
+			-t --locale en_US.UTF-8
+			#if $mode.summary_type.report_mode == "nstar"
+				--nstar-report
+			#end if
+			#if $mode.summary_type.report_mode == "outs"
+				--out-size $mode.summary_type.outs_feature
+			#end if
+			#if $mode.summary_type.report_mode == "outc"
+				--out-coord $mode.summary_type.outc_feature
+			#end if
+			#if $mode.summary_type.report_mode == "segment"
+				--segment-report
+				#if  $mode.summary_type.actual_sequence
+					--out-sequence
+				#end if
+			#end if
+			> '$output1'
+		#end if
+		#if $mode.mode == "manipulation"
+			#if $mode.sak
+				-k $mode.sak
+			#end if
+			-o $mode.of.output_format
+			#if $mode.of.output_format == "fasta" or $mode.of.output_format == "fasta.gz"
+				--line-length $mode.of.line_length
+			#end if
+			#if $mode.of.output_format == "gfa" or $mode.of.output_format == "gfa.gz"
+				#if $mode.of.tos.discover_terminal_overlaps
+					--discover-terminal-overlaps $mode.of.tos.overlaps_length
+				#end if
+				#if $mode.of.no_sequence
+					--no-sequence
+				#end if
+			#end if
+			#if $mode.discover_paths
+				--discover-paths
+			#end if
+			#if $mode.sort
+				--sort $mode.sort
+			#end if
+			#if $mode.remove_gaps
+				--remove-terminal-gaps
+			#end if
+			#if $mode.homopolymer_compress
+				--homopolymer-compress $mode.homopolymer_compress
+			#end if
+		#end if
+		#if $mode.mode == "scaffolding"
+			--agp-to-path $mode.agp
+			#if $mode.discover_paths
+				--discover-paths
+			#end if
+			#if $mode.no_sequence
+				--no-sequence
+			#end if
+		#end if
     ]]></command>
     <inputs>
-        <param type="data" name="input1" format="fasta" />
+        <param type="data" name="input1" format="fasta" label="Input file" />
 		<conditional name="setting">
-			<param name="specify" type="boolean" label="Specify target sequences" checked="false" help="如需分析指定区间序列，请勾选" />
+			<param name="specify" type="boolean" label="Specify target sequences" checked="false" help="Please select 'Yes' if specific sequences are targeted." />
 			<when value="true">
-				<param name="target_seq" type="string" label="Target sequence" help="Target specific sequence by header, optionally with coordinates: header[:start-end]" />
-				<param name="including_seq" type="data" label="Include specific intervals" format="bed" help="（-i）. Generates output on a subset list of headers or coordinates in 0-based bed format. It can be combined with --exclude-bed. Optional."/>
-				<param name="excluding_seq" type="data" label="Exclude specific intervals" format="bed" help="（-e）. Exclude a subset of headers or coordinates in 0-base bed format. It can be combined with --include-bed. Optional."/>
+				<param name="target_seq" type="string" optional="true" label="Target sequence" help="Target specific sequence by header, optionally with coordinates: header[:start-end]" />
+				<param name="including_seq" type="data" optional="true" label="Include specific intervals" format="bed" help="（-i）. Generates output on a subset list of headers or coordinates in 0-based bed format. It can be combined with --exclude-bed. Optional."/>
+				<param name="excluding_seq" type="data" optional="true" label="Exclude specific intervals" format="bed" help="（-e）. Exclude a subset of headers or coordinates in 0-base bed format. It can be combined with --include-bed. Optional."/>
 			</when>
 			<when value="false" />
 		</conditional>
@@ -59,7 +100,7 @@
 						<option value="segment">Sequence statistics (--segment-report)</option>
 					</param>
 					<when value="nstar">
-						<param name="est_size" type="integer" label="Expected genome size" help="Estimated genome size. This parameter is optional, but required for NG* statistics." />
+						<param name="est_size" type="integer" optional="true" label="Expected genome size" help="Estimated genome size. This parameter is optional, but required for NG* statistics." />
 					</when>
 					<when value="outs">
 						<param name="outs_feature" type="select" label="Feature for reporting sizes" help="Generate a tabular file with the sequence sizes (--out-size)">
@@ -79,6 +120,52 @@
 						<param name="actual_sequence" type="boolean" label="Report actual sequence" checked="false" help="It reports also the actual sequence (--out-sequence)" /> 
 					</when>
 				</conditional>
+			</when>
+			<when value="manipulation">
+				<param name="sak" type="data" format="txt" optional="true" label="SAK input file" help="Set of instructions provided as an ordered list (--swiss-army-knife)" />
+				<conditional name="of">
+					<param name="output_format" type="select" label="Output format" help="Outputs selected sequences. (--out-format)">
+						<option value="fasta" selected="true">FASTA</option>
+						<option value="fasta.gz">FASTA.gz</option>
+						<option value="fastq">FASTQ</option>
+						<option value="fastq.gz">FASTQ.gz</option>
+						<option value="gfa">GFA</option>
+						<option value="gfa.gz">GFA.gz</option>
+					</param>
+					<when value="fasta">
+						<param name="line_length" type="integer" value="40" min="0" max="80" help="Optional: specifies line length when output format is fasta. Default has no line breaks. (--line-length)" />
+					</when>
+					<when value="fasta.gz">
+						<param name="line_length" type="integer" value="40" min="0" max="80" optional="true" help="Optional: specifies line length when output format is fasta. Default has no line breaks. (--line-length)" />
+					</when>
+					<when value="fastq" />
+					<when value="fastq.gz" />
+					<when value="gfa">
+						<conditional name="tos">
+							<param name="discover_terminal_overlaps" type="boolean" checked="false" label="Terminal overlaps selection" help="Optional: Do you want to detect terminal overlaps? (if yes --discover-terminal-overlaps)" />
+							<when value="false" />
+							<when value="true">
+								<param name="overlaps_length" type="integer" value="500" min="500" optional="true" help="Integer for minimum length required to count as an overlap for detecting terminal overlaps (minimum is 500)" />
+							</when>
+						</conditional>
+						<param name="no_sequence" type="boolean" checked="false" label="Do not include sequences in the GFA output" help="Select Yes for a lighter GFA file. (--no-sequence)" />
+					</when>
+				</conditional>
+				<param name="discover_paths" type="boolean" checked="false" label="Generates the initial set of paths" help="In the graph space, an assembly is a collection of segments and edges/gaps between these segments. A path defines a potential walk through the segments and edges/gaps that corresponds to a hypothesis of the actual linear sequence. (--discover-paths)" />
+				<param name="sort" type="select" label="Sort sequences" help="Specify how to sort the sequences. Ascending/descending uses the sequence/path header. (--sort)">
+					<option value="" selected="true">Disable</option>
+					<option value="ascending">Ascending</option>
+					<option value="descending">Descending</option>
+					<option value="largest">Largest</option>
+					<option value="smallest">Smallest</option>
+				</param>
+				<param name="remove_gaps" type="boolean" checked="false" label="Remove gaps from the beginning and end of sequences" help="(--remove-terminal-gaps)" />
+				<param name="homopolymer_compress" type="integer" value="0" optional="true" label="Homopolymer compression" help="Compress all the homopolymers in the input above the given threshold. (--homopolymer-compress)" />
+			</when>
+			<when value="scaffolding">
+				<param name="agp" type="data" format="agp" label="Input AGP file" help="Integrate the AGP information into the assembly graph as paths. The scaffolding information is converted into paths through the graph (--agp-to-path)" />
+				<param name="discover_paths" type="boolean" checked="false" label="Generates the initial set of paths" help="In the graph space, an assembly is a collection of segments and edges/gaps between these segments. A path defines a potential walk through the segments and edges/gaps that corresponds to a hypothesis of the actual linear sequence. (--discover-paths)" />
+				<param name="no_sequence" type="boolean" checked="false" label="Do not include sequences in the GFA output" help="Select Yes for a lighter GFA file. (--no-sequence)" />
 			</when>
 		</conditional>
     </inputs>
